@@ -1,345 +1,206 @@
 /* =========================================================
- * 6학년 · Can you come to the ___? 데이터
- * - 초대 문장(Can you come to ~?) : 초급 / 중급 / 고급 각 18개
- * - 카테고리(인덱스별 공통) : book(교과서 행사) / fun(재미있는 행사)
- * - 승낙 표현 5개 · 거절 표현(Sorry, but I can't. I have a ~.) 10개
- * - 약속 잡기 : Please come to (장소) at (시간).  장소 10 · 시간 10
- * - 대화 만들기용 데이터 (행사 + 대답 + 장소/시간 조합)
- * - 단어 뜻 사전
- *  ※ 교과서 행사 6개 모두 포함:
- *    my birthday party / taekwondo show / laser show /
- *    book festival / movie festival / cooking class party
- *  ※ 초6이 좋아하는 행사 12개:
- *    K-pop concert · slime festival · magic show · school festival ·
- *    pizza party · robot show · game party · dance contest ·
- *    Halloween party · sleepover party · water park party · fireworks festival
- * - 내 행사 세트(3개) + 내 대답(승낙 1 · 거절 1) 은 app.js 에서 localStorage 에 저장
+ * What's your favorite subject? 데이터
+ * - 주요 표현
+ *     What's your favorite subject?
+ *     My favorite subject is ___.
+ *     I'm good at ___.
+ * - 말하기 문장 : 초급 / 중급 / 고급 각 20개 (과목 10 + 잘하는 것 10)
+ * - 카테고리(인덱스별 공통) : subject(과목) / good(잘하는 것)
+ * - 과목 10개 · 잘하는 것 10개
+ * - 내 소개 카드(3개) 는 app.js 에서 localStorage 에 저장
+ * - 이미지 : images/ 폴더의 Canva 이미지(img 경로). 파일이 없으면 이모지로 표시
  * ========================================================= */
 
-/* 카테고리: 같은 인덱스끼리 같은 종류 */
+/* 한국어 조사: 받침 유무로 을/를, 이야/야 고르기 */
+function hasBatchim(w) {
+  const c = w.charCodeAt(w.length - 1);
+  return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0;
+}
+const eulReul = w => w + (hasBatchim(w) ? "을" : "를");
+const iya = w => w + (hasBatchim(w) ? "이야" : "야");
+
+/* ===== 과목 10개 ===== */
+const SUBJECTS = [
+  { key: "korean",   en: "Korean",             ko: "국어",     emoji: "📖", img: "images/subject-korean.png",
+    why: "I like reading stories.",      whyKo: "나는 이야기 읽는 것을 좋아해." },
+  { key: "english",  en: "English",            ko: "영어",     emoji: "🔤", img: "images/subject-english.png",
+    why: "I like English songs.",        whyKo: "나는 영어 노래를 좋아해." },
+  { key: "math",     en: "math",               ko: "수학",     emoji: "➗", img: "images/subject-math.png",
+    why: "I like numbers.",              whyKo: "나는 숫자를 좋아해." },
+  { key: "science",  en: "science",            ko: "과학",     emoji: "🔬", img: "images/subject-science.png",
+    why: "I like experiments.",          whyKo: "나는 실험을 좋아해." },
+  { key: "social",   en: "social studies",     ko: "사회",     emoji: "🌏", img: "images/subject-social-studies.png",
+    why: "I like maps.",                 whyKo: "나는 지도를 좋아해." },
+  { key: "music",    en: "music",              ko: "음악",     emoji: "🎵", img: "images/subject-music.png",
+    why: "I like singing.",              whyKo: "나는 노래하는 것을 좋아해." },
+  { key: "art",      en: "art",                ko: "미술",     emoji: "🎨", img: "images/subject-art.png",
+    why: "I like drawing.",              whyKo: "나는 그림 그리는 것을 좋아해." },
+  { key: "pe",       en: "P.E.",               ko: "체육",     emoji: "⚽", img: "images/subject-pe.png",
+    why: "I like playing soccer.",       whyKo: "나는 축구하는 것을 좋아해." },
+  { key: "practical",en: "practical arts",     ko: "실과",     emoji: "🧵", img: "images/subject-practical-arts.png",
+    why: "I like making things.",        whyKo: "나는 무언가 만드는 것을 좋아해." },
+  { key: "moral",    en: "moral education",    ko: "도덕",     emoji: "🤝", img: "images/subject-moral-education.png",
+    why: "I like helping people.",       whyKo: "나는 사람들을 돕는 것을 좋아해." },
+];
+
+/* ===== 잘하는 것 10개 ===== */
+const GOOD_ATS = [
+  { key: "soccer",   en: "soccer",             ko: "축구",         emoji: "⚽", img: "images/good-soccer.png",
+    more: "I play soccer every day.",      moreKo: "나는 매일 축구를 해." },
+  { key: "swimming", en: "swimming",           ko: "수영",         emoji: "🏊", img: "images/good-swimming.png",
+    more: "I can swim very fast.",         moreKo: "나는 아주 빠르게 수영할 수 있어." },
+  { key: "singing",  en: "singing",            ko: "노래하기",     emoji: "🎤", img: "images/good-singing.png",
+    more: "I sing K-pop songs.",           moreKo: "나는 케이팝 노래를 불러." },
+  { key: "dancing",  en: "dancing",            ko: "춤추기",       emoji: "💃", img: "images/good-dancing.png",
+    more: "I dance with my friends.",      moreKo: "나는 친구들과 춤을 춰." },
+  { key: "drawing",  en: "drawing",            ko: "그림 그리기",  emoji: "✏️", img: "images/good-drawing.png",
+    more: "I draw cartoons.",              moreKo: "나는 만화를 그려." },
+  { key: "cooking",  en: "cooking",            ko: "요리하기",     emoji: "🍳", img: "images/good-cooking.png",
+    more: "I can make fried rice.",        moreKo: "나는 볶음밥을 만들 수 있어." },
+  { key: "running",  en: "running",            ko: "달리기",       emoji: "🏃", img: "images/good-running.png",
+    more: "I run very fast.",              moreKo: "나는 아주 빨리 달려." },
+  { key: "piano",    en: "playing the piano",  ko: "피아노 치기",  emoji: "🎹", img: "images/good-playing-the-piano.png",
+    more: "I practice every day.",         moreKo: "나는 매일 연습해." },
+  { key: "jumprope", en: "jumping rope",       ko: "줄넘기",       emoji: "🪢", img: "images/good-jumping-rope.png",
+    more: "I can do double jumps.",        moreKo: "나는 이단 뛰기를 할 수 있어." },
+  { key: "writing",  en: "writing stories",    ko: "이야기 쓰기",  emoji: "📝", img: "images/good-writing-stories.png",
+    more: "I write funny stories.",        moreKo: "나는 재미있는 이야기를 써." },
+];
+
+/* 카테고리: 같은 인덱스끼리 같은 종류 (0~9 과목 · 10~19 잘하는 것) */
 const SUGGESTION_CATEGORIES = [
-  "book","book","book","book","book","book",                  // 0~5   📘 교과서 행사 (6)
-  "fun","fun","fun","fun","fun","fun","fun","fun","fun","fun","fun","fun", // 6~17 🎈 재미있는 행사 (12)
+  ...SUBJECTS.map(() => "subject"),
+  ...GOOD_ATS.map(() => "good"),
 ];
 
-/* 이미지(실사) 검색 키워드 - 인덱스별 공통 */
-const IMAGE_PROMPTS = [
-  "kids birthday party with a big cake and balloons",
-  "children performing taekwondo show in white uniforms on stage",
-  "colorful laser light show at night",
-  "kids at a book festival with many books and tents",
-  "kids watching a movie at an outdoor movie festival",
-  "kids cooking class party wearing chef hats",
-  "kpop concert stage with colorful lights and cheering fans",
-  "kids playing with colorful slime at a festival",
-  "magician doing a magic show for children",
-  "school festival with balloons and booths",
-  "kids having a pizza party",
-  "robot show with dancing robots for kids",
-  "kids playing video games together at a game party",
-  "kids dance contest on a bright stage",
-  "kids halloween party with pumpkins and costumes",
-  "kids sleepover party with pillows and blankets",
-  "kids having fun at a water park party",
-  "colorful fireworks festival at night",
-];
-
-/* ===== 초대 문장 (모두 "Can you come to ~?" 로 시작) =====
- * 인덱스: book(0-5) · fun(6-17) */
+/* ===== 말하기 문장 (초급 / 중급 / 고급) ===== */
 const SUGGESTION_LEVELS = {
   beginner: [
-    // 📘 교과서 행사
-    { en: "Can you come to my birthday party?",       ko: "내 생일 파티에 올 수 있니?",     emoji: "🎂" },
-    { en: "Can you come to the taekwondo show?",      ko: "태권도 공연에 올 수 있니?",      emoji: "🥋" },
-    { en: "Can you come to the laser show?",          ko: "레이저 쇼에 올 수 있니?",        emoji: "✨" },
-    { en: "Can you come to the book festival?",       ko: "책 축제에 올 수 있니?",          emoji: "📚" },
-    { en: "Can you come to the movie festival?",      ko: "영화 축제에 올 수 있니?",        emoji: "🎬" },
-    { en: "Can you come to the cooking class party?", ko: "요리 교실 파티에 올 수 있니?",   emoji: "🍳" },
-    // 🎈 재미있는 행사
-    { en: "Can you come to the K-pop concert?",       ko: "케이팝 콘서트에 올 수 있니?",    emoji: "🎤" },
-    { en: "Can you come to the slime festival?",      ko: "슬라임 축제에 올 수 있니?",      emoji: "🫧" },
-    { en: "Can you come to the magic show?",          ko: "마술 쇼에 올 수 있니?",          emoji: "🎩" },
-    { en: "Can you come to the school festival?",     ko: "학교 축제에 올 수 있니?",        emoji: "🏫" },
-    { en: "Can you come to the pizza party?",         ko: "피자 파티에 올 수 있니?",        emoji: "🍕" },
-    { en: "Can you come to the robot show?",          ko: "로봇 쇼에 올 수 있니?",          emoji: "🤖" },
-    { en: "Can you come to the game party?",          ko: "게임 파티에 올 수 있니?",        emoji: "🎮" },
-    { en: "Can you come to the dance contest?",       ko: "댄스 대회에 올 수 있니?",        emoji: "💃" },
-    { en: "Can you come to the Halloween party?",     ko: "핼러윈 파티에 올 수 있니?",      emoji: "🎃" },
-    { en: "Can you come to the sleepover party?",     ko: "파자마 파티에 올 수 있니?",      emoji: "🛌" },
-    { en: "Can you come to the water park party?",    ko: "워터파크 파티에 올 수 있니?",    emoji: "💦" },
-    { en: "Can you come to the fireworks festival?",  ko: "불꽃 축제에 올 수 있니?",        emoji: "🎆" },
+    ...SUBJECTS.map(s => ({ en: `My favorite subject is ${s.en}.`, ko: `내가 가장 좋아하는 과목은 ${iya(s.ko)}.`, emoji: s.emoji, img: s.img })),
+    ...GOOD_ATS.map(g => ({ en: `I'm good at ${g.en}.`, ko: `나는 ${eulReul(g.ko)} 잘해.`, emoji: g.emoji, img: g.img })),
   ],
   intermediate: [
-    // 📘 교과서 행사
-    { en: "Can you come to my birthday party on Saturday?",     ko: "토요일에 내 생일 파티에 올 수 있니?",   emoji: "🎂" },
-    { en: "Can you come to the taekwondo show on Friday?",      ko: "금요일에 태권도 공연에 올 수 있니?",    emoji: "🥋" },
-    { en: "Can you come to the laser show tonight?",            ko: "오늘 밤 레이저 쇼에 올 수 있니?",       emoji: "✨" },
-    { en: "Can you come to the book festival this weekend?",    ko: "이번 주말에 책 축제에 올 수 있니?",     emoji: "📚" },
-    { en: "Can you come to the movie festival on Sunday?",      ko: "일요일에 영화 축제에 올 수 있니?",      emoji: "🎬" },
-    { en: "Can you come to the cooking class party tomorrow?",  ko: "내일 요리 교실 파티에 올 수 있니?",     emoji: "🍳" },
-    // 🎈 재미있는 행사
-    { en: "Can you come to the K-pop concert on Saturday?",     ko: "토요일에 케이팝 콘서트에 올 수 있니?",  emoji: "🎤" },
-    { en: "Can you come to the slime festival this weekend?",   ko: "이번 주말에 슬라임 축제에 올 수 있니?", emoji: "🫧" },
-    { en: "Can you come to the magic show after school?",       ko: "방과 후에 마술 쇼에 올 수 있니?",       emoji: "🎩" },
-    { en: "Can you come to the school festival on Friday?",     ko: "금요일에 학교 축제에 올 수 있니?",      emoji: "🏫" },
-    { en: "Can you come to the pizza party tomorrow?",          ko: "내일 피자 파티에 올 수 있니?",          emoji: "🍕" },
-    { en: "Can you come to the robot show on Sunday?",          ko: "일요일에 로봇 쇼에 올 수 있니?",        emoji: "🤖" },
-    { en: "Can you come to the game party after school?",       ko: "방과 후에 게임 파티에 올 수 있니?",     emoji: "🎮" },
-    { en: "Can you come to the dance contest next week?",       ko: "다음 주에 댄스 대회에 올 수 있니?",     emoji: "💃" },
-    { en: "Can you come to the Halloween party on Friday?",     ko: "금요일에 핼러윈 파티에 올 수 있니?",    emoji: "🎃" },
-    { en: "Can you come to the sleepover party this Saturday?", ko: "이번 토요일에 파자마 파티에 올 수 있니?", emoji: "🛌" },
-    { en: "Can you come to the water park party on Sunday?",    ko: "일요일에 워터파크 파티에 올 수 있니?",  emoji: "💦" },
-    { en: "Can you come to the fireworks festival tonight?",    ko: "오늘 밤 불꽃 축제에 올 수 있니?",       emoji: "🎆" },
+    ...SUBJECTS.map(s => ({ en: `What's your favorite subject? My favorite subject is ${s.en}.`,
+                            ko: `네가 가장 좋아하는 과목은 뭐니? 내가 가장 좋아하는 과목은 ${iya(s.ko)}.`, emoji: s.emoji, img: s.img })),
+    ...GOOD_ATS.map(g => ({ en: `I'm good at ${g.en}. ${g.more}`, ko: `나는 ${eulReul(g.ko)} 잘해. ${g.moreKo}`, emoji: g.emoji, img: g.img })),
   ],
   advanced: [
-    // 📘 교과서 행사
-    { en: "Can you come to my birthday party on Saturday? We'll have a big cake.",     ko: "토요일에 내 생일 파티에 올 수 있니? 큰 케이크가 있을 거야.", emoji: "🎂" },
-    { en: "Can you come to the taekwondo show on Friday? I'll break a board.",          ko: "금요일에 태권도 공연에 올 수 있니? 내가 격파를 할 거야.",     emoji: "🥋" },
-    { en: "Can you come to the laser show tonight? It starts at 8.",                    ko: "오늘 밤 레이저 쇼에 올 수 있니? 8시에 시작해.",              emoji: "✨" },
-    { en: "Can you come to the book festival this weekend? We can meet famous writers.", ko: "이번 주말에 책 축제에 올 수 있니? 유명한 작가들을 만날 수 있어.", emoji: "📚" },
-    { en: "Can you come to the movie festival on Sunday? They'll show a new movie.",    ko: "일요일에 영화 축제에 올 수 있니? 새 영화를 보여줄 거야.",    emoji: "🎬" },
-    { en: "Can you come to the cooking class party tomorrow? We'll make pizza together.", ko: "내일 요리 교실 파티에 올 수 있니? 함께 피자를 만들 거야.",  emoji: "🍳" },
-    // 🎈 재미있는 행사
-    { en: "Can you come to the K-pop concert on Saturday? My favorite group is coming.", ko: "토요일에 케이팝 콘서트에 올 수 있니? 내가 제일 좋아하는 그룹이 와.", emoji: "🎤" },
-    { en: "Can you come to the slime festival this weekend? We can make rainbow slime.", ko: "이번 주말에 슬라임 축제에 올 수 있니? 무지개 슬라임을 만들 수 있어.", emoji: "🫧" },
-    { en: "Can you come to the magic show after school? The magician is amazing.",     ko: "방과 후에 마술 쇼에 올 수 있니? 마술사가 정말 대단해.",        emoji: "🎩" },
-    { en: "Can you come to the school festival on Friday? Our class will sing.",       ko: "금요일에 학교 축제에 올 수 있니? 우리 반이 노래할 거야.",     emoji: "🏫" },
-    { en: "Can you come to the pizza party tomorrow? We'll eat a lot of pizza.",        ko: "내일 피자 파티에 올 수 있니? 피자를 많이 먹을 거야.",         emoji: "🍕" },
-    { en: "Can you come to the robot show on Sunday? The robots can dance.",           ko: "일요일에 로봇 쇼에 올 수 있니? 로봇들이 춤을 출 수 있어.",    emoji: "🤖" },
-    { en: "Can you come to the game party after school? We'll play new games.",        ko: "방과 후에 게임 파티에 올 수 있니? 새 게임을 할 거야.",         emoji: "🎮" },
-    { en: "Can you come to the dance contest next week? I'll dance on stage.",         ko: "다음 주에 댄스 대회에 올 수 있니? 내가 무대에서 춤출 거야.",  emoji: "💃" },
-    { en: "Can you come to the Halloween party on Friday? Please wear a costume.",     ko: "금요일에 핼러윈 파티에 올 수 있니? 분장 옷을 입고 와 줘.",    emoji: "🎃" },
-    { en: "Can you come to the sleepover party this Saturday? We'll watch movies all night.", ko: "이번 토요일에 파자마 파티에 올 수 있니? 밤새 영화를 볼 거야.", emoji: "🛌" },
-    { en: "Can you come to the water park party on Sunday? We'll ride the big slides.", ko: "일요일에 워터파크 파티에 올 수 있니? 큰 슬라이드를 탈 거야.", emoji: "💦" },
-    { en: "Can you come to the fireworks festival tonight? The sky will be so beautiful.", ko: "오늘 밤 불꽃 축제에 올 수 있니? 하늘이 정말 아름다울 거야.", emoji: "🎆" },
+    ...SUBJECTS.map(s => ({ en: `My favorite subject is ${s.en}. ${s.why}`,
+                            ko: `내가 가장 좋아하는 과목은 ${iya(s.ko)}. ${s.whyKo}`, emoji: s.emoji, img: s.img })),
+    ...GOOD_ATS.map((g, i) => {
+      const s = SUBJECTS[[7, 7, 5, 5, 6, 8, 7, 5, 7, 0][i]];   // 잘하는 것과 어울리는 과목
+      return { en: `My favorite subject is ${s.en}. I'm good at ${g.en}.`,
+               ko: `내가 가장 좋아하는 과목은 ${iya(s.ko)}. 나는 ${eulReul(g.ko)} 잘해.`, emoji: g.emoji, img: g.img };
+    }),
   ],
 };
 
-/* ===== 승낙 (Yes) ===== */
-const ACCEPT_EXPRESSIONS = [
-  { en: "Of course.",           ko: "물론이지.",            emoji: "😊", imgPrompt: "happy child giving thumbs up" },
-  { en: "Sure.",                ko: "그럼(당연하지).",       emoji: "👍", imgPrompt: "smiling kid nodding yes" },
-  { en: "Yes, I can.",          ko: "응, 갈 수 있어.",       emoji: "🙋", imgPrompt: "excited child raising hand" },
-  { en: "Sounds fun!",          ko: "재미있겠다!",           emoji: "🤩", imgPrompt: "kids cheering with joy" },
-  { en: "Okay, I'll be there.", ko: "좋아, 거기로 갈게.",    emoji: "🏃", imgPrompt: "child waving and running to friends" },
+/* ===== 질문 표현 ===== */
+const QUESTION = { en: "What's your favorite subject?", ko: "네가 가장 좋아하는 과목은 뭐니?", emoji: "❓", img: "images/question.png" };
+
+/* 질문에 대한 반응 (친구의 대답을 듣고) */
+const REACTIONS = [
+  { en: "Me, too!",       ko: "나도 그래!",     emoji: "🙌", img: "images/react-me-too.png" },
+  { en: "Cool!",          ko: "멋지다!",        emoji: "😎", img: "images/react-cool.png" },
+  { en: "Great!",         ko: "좋다!",          emoji: "👍", img: "images/react-great.png" },
+  { en: "That's nice.",   ko: "그거 좋네.",      emoji: "😊", img: "images/react-nice.png" },
+  { en: "Wow, amazing!",  ko: "와, 대단하다!",   emoji: "🤩", img: "images/react-amazing.png" },
 ];
 
-/* ===== 거절 (No) : Sorry, but I can't. I have a ~. ===== */
-const REFUSE_REASONS = [
-  { en: "piano lesson",         ko: "피아노 수업",     emoji: "🎹", imgPrompt: "child taking a piano lesson" },
-  { en: "taekwondo class",      ko: "태권도 수업",     emoji: "🥋", imgPrompt: "kids in a taekwondo class" },
-  { en: "swimming lesson",      ko: "수영 수업",       emoji: "🏊", imgPrompt: "child taking a swimming lesson" },
-  { en: "math test",            ko: "수학 시험",       emoji: "📝", imgPrompt: "student studying for a math test" },
-  { en: "soccer game",          ko: "축구 경기",       emoji: "⚽", imgPrompt: "kids playing a soccer game" },
-  { en: "family dinner",        ko: "가족 저녁 식사",  emoji: "🍽️", imgPrompt: "family having dinner together" },
-  { en: "dentist appointment",  ko: "치과 예약",       emoji: "🦷", imgPrompt: "child at the dentist" },
-  { en: "cold",                 ko: "감기",            emoji: "🤧", imgPrompt: "child with a cold in bed" },
-  { en: "headache",             ko: "두통",            emoji: "🤕", imgPrompt: "child with a headache" },
-  { en: "lot of homework",      ko: "많은 숙제",       emoji: "📚", imgPrompt: "child doing a lot of homework" },
-];
-/* ===== 약속 잡기 : 장소 (Where) ===== */
-const PLACE_EXPRESSIONS = [
-  { en: "my house",           ko: "우리 집",       emoji: "🏠", imgPrompt: "a cozy house with a front door" },
-  { en: "the school gym",     ko: "학교 체육관",   emoji: "🏀", imgPrompt: "school gym" },
-  { en: "the school gate",    ko: "학교 정문",     emoji: "🚪", imgPrompt: "school front gate" },
-  { en: "the park",           ko: "공원",          emoji: "🌳", imgPrompt: "sunny park with trees" },
-  { en: "the playground",     ko: "놀이터",        emoji: "🛝", imgPrompt: "kids playground with slides" },
-  { en: "the library",        ko: "도서관",        emoji: "📖", imgPrompt: "public library building" },
-  { en: "the bus stop",       ko: "버스 정류장",   emoji: "🚌", imgPrompt: "bus stop on a street" },
-  { en: "the subway station", ko: "지하철역",      emoji: "🚇", imgPrompt: "subway station entrance" },
-  { en: "the shopping mall",  ko: "쇼핑몰",        emoji: "🛍️", imgPrompt: "bright shopping mall" },
-  { en: "the movie theater",  ko: "영화관",        emoji: "🎟️", imgPrompt: "movie theater entrance" },
-];
-
-/* ===== 약속 잡기 : 시간 (What time) ===== */
-const TIME_EXPRESSIONS = [
-  { en: "10 o'clock", ko: "10시",     emoji: "🕙", imgPrompt: "clock showing ten o'clock" },
-  { en: "11 o'clock", ko: "11시",     emoji: "🕚", imgPrompt: "clock showing eleven o'clock" },
-  { en: "noon",       ko: "정오(12시)", emoji: "🕛", imgPrompt: "clock showing twelve noon" },
-  { en: "1 o'clock",  ko: "1시",      emoji: "🕐", imgPrompt: "clock showing one o'clock" },
-  { en: "2 o'clock",  ko: "2시",      emoji: "🕑", imgPrompt: "clock showing two o'clock" },
-  { en: "2:30",       ko: "2시 30분", emoji: "🕝", imgPrompt: "clock showing half past two" },
-  { en: "3 o'clock",  ko: "3시",      emoji: "🕒", imgPrompt: "clock showing three o'clock" },
-  { en: "4 o'clock",  ko: "4시",      emoji: "🕓", imgPrompt: "clock showing four o'clock" },
-  { en: "5 o'clock",  ko: "5시",      emoji: "🕔", imgPrompt: "clock showing five o'clock" },
-  { en: "6 o'clock",  ko: "6시",      emoji: "🕕", imgPrompt: "clock showing six o'clock" },
-];
-/* ===== 대화 만들기 (행사 + 대답 + 장소/시간 조합) ===== */
+/* ===== 내 소개 카드 만들기 ===== */
 const BUILD_CATS = [
-  { key: "book", label: "📘 교과서 행사" },
-  { key: "fun",  label: "🎈 재미있는 행사" },
+  { key: "core",  label: "📘 주요 과목" },
+  { key: "arts",  label: "🎨 예체능 · 기타 과목" },
 ];
-
-const BUILD_EVENTS = [
-  // 📘 교과서 행사
-  { en: "my birthday party",       ko: "내 생일 파티",    emoji: "🎂", cat: "book" },
-  { en: "the taekwondo show",      ko: "태권도 공연",     emoji: "🥋", cat: "book" },
-  { en: "the laser show",          ko: "레이저 쇼",       emoji: "✨", cat: "book" },
-  { en: "the book festival",       ko: "책 축제",         emoji: "📚", cat: "book" },
-  { en: "the movie festival",      ko: "영화 축제",       emoji: "🎬", cat: "book" },
-  { en: "the cooking class party", ko: "요리 교실 파티",  emoji: "🍳", cat: "book" },
-  // 🎈 재미있는 행사
-  { en: "the K-pop concert",       ko: "케이팝 콘서트",   emoji: "🎤", cat: "fun" },
-  { en: "the slime festival",      ko: "슬라임 축제",     emoji: "🫧", cat: "fun" },
-  { en: "the magic show",          ko: "마술 쇼",         emoji: "🎩", cat: "fun" },
-  { en: "the school festival",     ko: "학교 축제",       emoji: "🏫", cat: "fun" },
-  { en: "the pizza party",         ko: "피자 파티",       emoji: "🍕", cat: "fun" },
-  { en: "the robot show",          ko: "로봇 쇼",         emoji: "🤖", cat: "fun" },
-  { en: "the game party",          ko: "게임 파티",       emoji: "🎮", cat: "fun" },
-  { en: "the dance contest",       ko: "댄스 대회",       emoji: "💃", cat: "fun" },
-  { en: "the Halloween party",     ko: "핼러윈 파티",     emoji: "🎃", cat: "fun" },
-  { en: "the sleepover party",     ko: "파자마 파티",     emoji: "🛌", cat: "fun" },
-  { en: "the water park party",    ko: "워터파크 파티",   emoji: "💦", cat: "fun" },
-  { en: "the fireworks festival",  ko: "불꽃 축제",       emoji: "🎆", cat: "fun" },
-];
+const SUBJECT_CAT = { korean: "core", english: "core", math: "core", science: "core", social: "core",
+                      music: "arts", art: "arts", pe: "arts", practical: "arts", moral: "arts" };
 
 /* ===== 단어 뜻 사전 ===== */
 function wordKey(w) {
-  return w.toLowerCase().replace(/^[^a-z0-9':]+/, "").replace(/[^a-z0-9':]+$/, "");
+  return w.toLowerCase().replace(/^[^a-z0-9'.:]+/, "").replace(/[^a-z0-9':]+$/, "").replace(/\.$/, "") || w.toLowerCase();
 }
 
 const WORD_MEANINGS = {
-  "can": "~할 수 있다",
-  "can't": "~할 수 없다 (cannot)",
-  "you": "너, 너희",
-  "come": "오다",
-  "to": "~에, ~으로",
-  "the": "그 (특정한 것)",
+  "what's": "무엇이 ~이니? (what is)",
+  "what": "무엇",
+  "your": "너의",
   "my": "나의",
-  "i": "나는",
-  "i'll": "나는 ~할 거야 (I will)",
-  "we'll": "우리는 ~할 거야 (we will)",
-  "it'll": "그것은 ~할 거야 (it will)",
-  "they'll": "그들은 ~할 거야 (they will)",
-  "we": "우리는",
-  "our": "우리의",
-  "it": "그것",
-  "they": "그들은",
-  "birthday": "생일",
-  "party": "파티",
-  "taekwondo": "태권도",
-  "show": "쇼, 공연; 보여주다",
-  "laser": "레이저",
-  "book": "책",
-  "festival": "축제",
-  "movie": "영화",
-  "movies": "영화 (여러 편)",
-  "cooking": "요리",
-  "class": "수업, 반",
-  "k-pop": "케이팝 (K-pop)",
-  "kpop": "케이팝",
-  "concert": "콘서트, 공연",
-  "slime": "슬라임",
-  "magic": "마술",
-  "magician": "마술사",
-  "school": "학교",
-  "pizza": "피자",
-  "robot": "로봇",
-  "robots": "로봇들",
-  "game": "게임, 경기",
-  "games": "게임 (여러 개)",
-  "dance": "춤; 춤추다",
-  "contest": "대회, 경연",
-  "halloween": "핼러윈",
-  "sleepover": "친구 집에서 자며 노는 것 (파자마 파티)",
-  "water": "물 (water park: 워터파크)",
-  "fireworks": "불꽃놀이",
-  "ride": "타다",
-  "slides": "미끄럼틀, 슬라이드",
-  "sky": "하늘",
-  "will": "~할 것이다",
-  "so": "정말, 아주",
-  "beautiful": "아름다운",
-  "on": "~에 (요일 앞에)",
-  "saturday": "토요일",
-  "sunday": "일요일",
-  "friday": "금요일",
-  "tonight": "오늘 밤",
-  "tomorrow": "내일",
-  "this": "이, 이번",
-  "next": "다음",
-  "week": "주",
-  "weekend": "주말",
-  "after": "~후에",
-  "have": "가지고 있다, (일정이) 있다",
-  "a": "하나의",
-  "an": "하나의",
-  "big": "큰",
-  "cake": "케이크",
-  "break": "부수다, 격파하다",
-  "board": "판자, 송판",
-  "starts": "시작하다 (start)",
-  "at": "~에 (시간·장소 앞에)",
-  "meet": "만나다",
-  "famous": "유명한",
-  "writers": "작가들",
-  "new": "새로운",
-  "make": "만들다",
-  "together": "함께",
   "favorite": "가장 좋아하는",
-  "group": "그룹, 무리",
+  "subject": "과목",
   "is": "~이다",
-  "coming": "오고 있는 (come)",
-  "rainbow": "무지개",
-  "amazing": "놀라운, 대단한",
-  "sing": "노래하다",
-  "eat": "먹다",
-  "lot": "많음 (a lot of: 많은)",
-  "of": "~의",
-  "play": "(게임·운동을) 하다, 놀다",
-  "stage": "무대",
-  "please": "제발, ~해 주세요",
-  "wear": "입다",
-  "costume": "분장 옷, 의상",
-  "watch": "보다",
-  "all": "모든, 내내",
-  "night": "밤",
-  "course": "물론 (of course: 물론이지)",
-  "sure": "물론, 그럼",
-  "yes": "응, 네",
-  "sounds": "~하게 들리다 (sound)",
-  "fun": "재미있는; 재미",
-  "okay": "좋아, 알았어",
-  "be": "~이다, (be there) 거기 가다",
-  "there": "거기에",
-  "sorry": "미안해",
-  "but": "하지만, 그런데",
-  "piano": "피아노",
-  "lesson": "수업, 레슨",
-  "swimming": "수영",
+  "i'm": "나는 ~이다 (I am)",
+  "i": "나는",
+  "good": "좋은, 잘하는 (be good at: ~을 잘하다)",
+  "at": "~에 (good at: ~을 잘하는)",
+  "korean": "국어, 한국어",
+  "english": "영어",
   "math": "수학",
-  "test": "시험",
+  "science": "과학",
+  "social": "사회의 (social studies: 사회 과목)",
+  "studies": "공부, 학문 (social studies: 사회)",
+  "music": "음악",
+  "art": "미술",
+  "p.e": "체육 (physical education)",
+  "p.e.": "체육 (physical education)",
+  "practical": "실용적인 (practical arts: 실과)",
+  "arts": "예술, 기술 (practical arts: 실과)",
+  "moral": "도덕의 (moral education: 도덕)",
+  "education": "교육",
   "soccer": "축구",
-  "family": "가족",
-  "dinner": "저녁 식사",
-  "dentist": "치과 의사, 치과",
-  "appointment": "예약, 약속",
-  "cold": "감기; 추운",
-  "headache": "두통",
-  "homework": "숙제",
-  "house": "집",
-  "gym": "체육관",
-  "gate": "정문, 문",
-  "park": "공원",
-  "playground": "놀이터",
-  "library": "도서관",
-  "bus": "버스",
-  "stop": "정류장; 멈추다",
-  "subway": "지하철",
-  "station": "역",
-  "shopping": "쇼핑",
-  "mall": "쇼핑몰",
-  "theater": "극장, 영화관",
-  "o'clock": "~시 (정각)",
-  "noon": "정오, 낮 12시",
-  "1": "하나, 1",
-  "2": "둘, 2",
-  "3": "셋, 3",
-  "4": "넷, 4",
-  "5": "다섯, 5",
-  "6": "여섯, 6",
-  "8": "여덟, 8",
-  "10": "열, 10",
-  "11": "열하나, 11",
-  "2:30": "2시 30분 (two thirty)",
+  "swimming": "수영, 수영하기",
+  "singing": "노래하기",
+  "dancing": "춤추기",
+  "drawing": "그림 그리기",
+  "cooking": "요리하기",
+  "running": "달리기",
+  "playing": "(악기를) 연주하기, (운동을) 하기",
+  "the": "그 (악기 앞에: play the piano)",
+  "piano": "피아노",
+  "jumping": "뛰기 (jumping rope: 줄넘기)",
+  "rope": "줄 (jump rope: 줄넘기하다)",
+  "writing": "쓰기",
+  "stories": "이야기들 (story)",
+  "like": "좋아하다",
+  "reading": "읽기",
+  "songs": "노래들 (song)",
+  "numbers": "숫자들 (number)",
+  "experiments": "실험들 (experiment)",
+  "maps": "지도들 (map)",
+  "making": "만들기",
+  "things": "물건들, 것들",
+  "helping": "돕기",
+  "people": "사람들",
+  "play": "(운동을) 하다, 놀다",
+  "every": "모든, 매~",
+  "day": "날, 하루",
+  "can": "~할 수 있다",
+  "swim": "수영하다",
+  "very": "아주, 매우",
+  "fast": "빨리, 빠른",
+  "sing": "노래하다",
+  "k-pop": "케이팝",
+  "dance": "춤추다",
+  "with": "~와 함께",
+  "friends": "친구들",
+  "draw": "그리다",
+  "cartoons": "만화 (cartoon)",
+  "make": "만들다",
+  "fried": "볶은, 튀긴",
+  "rice": "밥, 쌀",
+  "run": "달리다",
+  "practice": "연습하다",
+  "do": "하다",
+  "double": "두 번의, 이중의 (double jump: 이단 뛰기)",
+  "jumps": "뛰기 (jump)",
+  "write": "쓰다",
+  "funny": "재미있는, 웃긴",
+  "me": "나",
+  "too": "~도 (Me, too: 나도)",
+  "cool": "멋진",
+  "great": "아주 좋은, 훌륭한",
+  "that's": "그것은 ~이다 (that is)",
+  "nice": "좋은, 멋진",
+  "wow": "와 (감탄)",
+  "amazing": "놀라운, 대단한",
+  "a": "하나의",
 };
